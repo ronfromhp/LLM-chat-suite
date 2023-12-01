@@ -3,73 +3,31 @@ from openai import AsyncOpenAI
 import asyncio
 import os
 from dotenv import load_dotenv
-from langchain.agents import load_tools, initialize_agent
+from langchain.agents import Tool
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain.chat_models import ChatOpenAI
 from langchain.tools.wolfram_alpha import WolframAlphaQueryRun
 from langchain.utilities.wolfram_alpha import WolframAlphaAPIWrapper
+from langchain.utilities import SerpAPIWrapper
+
 load_dotenv()
 
 wolfram_api_wrapper = WolframAlphaAPIWrapper(wolfram_alpha_appid=os.environ.get("WOLFRAM_ALPHA_APPID"))
 api_key = os.environ.get("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key)
-tools = [
-        {"type": "code_interpreter"},
-        {
-            "type": "function",
-            "function": {
-                    "name": "get_current_weather",
-                    "description": "Get the current weather in a given location",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "location": {
-                                "type": "string",
-                                "description": "The city and state, e.g. San Francisco, CA",
-                            },
-                            "unit": {
-                                "type": "string",
-                                "description": "The unit of measurement for the temperature, e.g. Farenheit",
-                            },
-                        },
-                        "required": ["location"],
-                    }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                    "name": "get_taxi_booking_information",
-                    "description": "Get information required from the user to book a taxi for them if the user intends to book a taxi.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "pickup_location": {
-                                "type": "string",
-                                "description": "The pickup location of the user.",
-                            },
-                            "dropoff_location": {
-                                "type": "string",
-                                "description": "The dropoff location of the user.",
-                            },
-                            "pickup_time": {
-                                "type": "string",
-                                "description": "The pickup time of the user.",
-                            },
-                            "number_of_passengers": {
-                                "type": "number",
-                                "description": "The number of passengers.",
-                            },
-                        },
-                        "required": ["pickup_location", "dropoff_location", "pickup_time", "number_of_passengers"],
-                    }
-            }
-        }
-    ]
-    
-tools = [WolframAlphaQueryRun(api_wrapper=wolfram_api_wrapper)]
-print(tools)
 
+search = SerpAPIWrapper()
+
+tools = [
+    WolframAlphaQueryRun(api_wrapper=wolfram_api_wrapper),
+    Tool(
+        name="Search",
+        func=search.run,
+        description="useful for when you need to answer questions about current events. You should ask targeted questions",
+    ),
+    ]
+
+print(tools)
 
 async def create():
 
@@ -109,7 +67,7 @@ Given a formula below $$ s = ut + \frac{1}{2}at^{2} $$ Calculate the value of $s
     )
     print("langchain assistant created", assistant)
     # print(assistant_id)
-    assistant_name = "your assistent's name"
+    assistant_name = "searchistant"
     # append key vallue pair to assistants.json
     def load_or_create_json(filename):
         try:

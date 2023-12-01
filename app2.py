@@ -168,7 +168,6 @@ async def run_conversation(message_from_ui: cl.Message):
                             
                     elif tool_call.type == "function":
                         tool_map = {tool.name: tool for tool in tools}
-                        print(tool_map)
                         function_name = tool_call.function.name
                         function_args = json.loads(tool_call.function.arguments)
 
