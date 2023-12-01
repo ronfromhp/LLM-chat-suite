@@ -111,11 +111,14 @@ Given a formula below $$ s = ut + \frac{1}{2}at^{2} $$ Calculate the value of $s
     # print(assistant_id)
     assistant_name = "your assistent's name"
     # append key vallue pair to assistants.json
-    assistant_dict = json.load(open("assistants.json", "r"))
+    def load_or_create_json(filename):
+        try:
+            return json.load(open(filename, "r"))
+        except FileNotFoundError:
+            return {}
+    assistant_dict = load_or_create_json("assistants.json")
     assistant_dict[assistant_name] = assistant.assistant_id
     json.dump(assistant_dict, open("assistants.json", "w"))
-
-    # SAVE IT IN .env
 
 
 asyncio.run(create())
