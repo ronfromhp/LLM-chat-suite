@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict
-
+from langchain.agents import Tool
 from openai import AsyncOpenAI
 from openai.types.beta import Thread
 from openai.types.beta.threads import (
@@ -67,6 +67,9 @@ class DictToObject:
                 setattr(self, key, DictToObject(value))
             else:
                 setattr(self, key, value)
+                
+    def __str__(self):
+        return '\n'.join(f'{key}: {value}' for key, value in self.__dict__.items())
 
 @cl.on_chat_start
 async def start_chat():
@@ -167,7 +170,7 @@ async def run_conversation(message_from_ui: cl.Message):
                             await message_references[tool_call.id].send()
                             
                     elif tool_call.type == "function":
-                        tool_map = {tool.name: tool for tool in tools}
+                        tool_map = {tool.name: tool for tool in tools if hasattr(tool, "name")}
                         function_name = tool_call.function.name
                         function_args = json.loads(tool_call.function.arguments)
 
@@ -180,7 +183,7 @@ async def run_conversation(message_from_ui: cl.Message):
                             )
                             await message_references[tool_call.id].send()
 
-                            tool_output = tool_map[function_name].invoke(tool_call.function.arguments)
+                            tool_output = tool_map[function_name].invoke(json.loads(tool_call.function.arguments)["__arg1"])
                             print("ARGUEMENTSSSSS", tool_call.function.arguments)
                             print(function_name, function_args, tool_output, end="\n\n")
                             tool_outputs.append(

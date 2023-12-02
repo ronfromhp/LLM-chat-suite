@@ -19,6 +19,7 @@ client = AsyncOpenAI(api_key=api_key)
 search = SerpAPIWrapper()
 
 tools = [
+    {"type": "code_interpreter"},
     WolframAlphaQueryRun(api_wrapper=wolfram_api_wrapper),
     Tool(
         name="Search",
