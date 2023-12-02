@@ -17,7 +17,6 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 api_key = os.environ.get("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key)
 assistant_id = os.environ.get("ASSISTANT_ID")
-tool_outputs = []
 
 async def process_thread_message(
     message_references: Dict[str, cl.Message], thread_message: ThreadMessage
@@ -92,7 +91,7 @@ async def run_conversation(message_from_ui: cl.Message):
     )
 
     message_references = {}  # type: Dict[str, cl.Message]
-    
+    tool_outputs = []
     # Periodically check for updates
     while True:
         run = await client.beta.threads.runs.retrieve(
@@ -123,7 +122,11 @@ async def run_conversation(message_from_ui: cl.Message):
                     # print("NOW DICT", tool_call)
                     if isinstance(tool_call, dict):
                         tool_call = DictToObject(tool_call)
-                    print("NOW OBJ",tool_call)
+                        print("NOW IT WAS A DICT",tool_call)
+                    else:
+                        print("NOw IT WAS AN OBJ", tool_call)
+                        print(tool_call.type)
+                        
                     if tool_call.type == "code_interpreter":
                         if not tool_call.id in message_references:
                             message_references[tool_call.id] = cl.Message(
