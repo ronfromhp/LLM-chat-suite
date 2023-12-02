@@ -13,14 +13,11 @@ import chainlit as cl
 from chainlit.context import context
 from create_assistant import tools
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 api_key = os.environ.get("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key)
 assistant_id = os.environ.get("ASSISTANT_ID")
-
-async def get_taxi_booking_information(**kwargs):
-    return {
-        "booking_id": "1234567890",
-    }
+tool_outputs = []
 
 async def process_thread_message(
     message_references: Dict[str, cl.Message], thread_message: ThreadMessage
@@ -95,7 +92,7 @@ async def run_conversation(message_from_ui: cl.Message):
     )
 
     message_references = {}  # type: Dict[str, cl.Message]
-
+    
     # Periodically check for updates
     while True:
         run = await client.beta.threads.runs.retrieve(
@@ -106,7 +103,7 @@ async def run_conversation(message_from_ui: cl.Message):
         run_steps = await client.beta.threads.runs.steps.list(
             thread_id=thread.id, run_id=run.id, order="asc"
         )
-
+        
         for step in run_steps.data:
             # Fetch step details
             run_step = await client.beta.threads.runs.steps.retrieve(
@@ -123,11 +120,10 @@ async def run_conversation(message_from_ui: cl.Message):
 
             if step_details.type == "tool_calls":
                 for tool_call in step_details.tool_calls:
-                    print(tool_call)
-                    tool_outputs = []
+                    # print("NOW DICT", tool_call)
                     if isinstance(tool_call, dict):
                         tool_call = DictToObject(tool_call)
-                    print(tool_call)
+                    print("NOW OBJ",tool_call)
                     if tool_call.type == "code_interpreter":
                         if not tool_call.id in message_references:
                             message_references[tool_call.id] = cl.Message(
@@ -159,7 +155,17 @@ async def run_conversation(message_from_ui: cl.Message):
                             message_references[tool_output_id].content = (
                                 str(tool_call.code_interpreter.outputs) or ""
                             )
+                            
                             await message_references[tool_output_id].update()
+                            
+                        tool_outputs.append(
+                                {
+                                    "output": tool_call.code_interpreter.outputs or "",
+                                    "tool_call_id": tool_call.id,
+                                }
+                            )
+                        print("TOOL code OUTPUTS", tool_outputs)    
+                        
                     elif tool_call.type == "retrieval":
                         if not tool_call.id in message_references:
                             message_references[tool_call.id] = cl.Message(
@@ -189,7 +195,7 @@ async def run_conversation(message_from_ui: cl.Message):
                             tool_outputs.append(
                                 {"output": tool_output, "tool_call_id": tool_call.id}
                             )
-                            
+                            print("TOOL OUTPUTS", tool_outputs)
                             await client.beta.threads.runs.submit_tool_outputs(
                                 thread_id=thread.id,
                                 run_id=run.id,
