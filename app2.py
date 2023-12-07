@@ -1,7 +1,6 @@
 import json
 import os
-from typing import Dict
-from langchain.agents import Tool
+from typing import Dict, Optional
 from openai import AsyncOpenAI
 from openai.types.beta import Thread
 from openai.types.beta.threads import (
@@ -13,7 +12,6 @@ import chainlit as cl
 from chainlit.context import context
 from create_assistant import tools
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
 api_key = os.environ.get("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key)
 assistant_id = os.environ.get("ASSISTANT_ID")
@@ -67,6 +65,17 @@ class DictToObject:
     def __str__(self):
         return '\n'.join(f'{key}: {value}' for key, value in self.__dict__.items())
 
+
+# @cl.oauth_callback
+# def oauth_callback(
+#     provider_id: str,
+#     token: str,
+#     raw_user_data: Dict[str, str],
+#     default_app_user: cl.AppUser,
+# ) -> Optional[cl.AppUser]:
+#     return default_app_user
+
+
 @cl.on_chat_start
 async def start_chat():
     thread = await client.beta.threads.create()
@@ -118,6 +127,7 @@ async def run_conversation(message_from_ui: cl.Message):
                 await process_thread_message(message_references, thread_message)
 
             if step_details.type == "tool_calls":
+                print("TOOL CALLS", step_details)
                 for tool_call in step_details.tool_calls:
                     # print("NOW DICT", tool_call)
                     if isinstance(tool_call, dict):
@@ -198,12 +208,13 @@ async def run_conversation(message_from_ui: cl.Message):
                             tool_outputs.append(
                                 {"output": tool_output, "tool_call_id": tool_call.id}
                             )
-                            print("TOOL OUTPUTS", tool_outputs)
-                            await client.beta.threads.runs.submit_tool_outputs(
-                                thread_id=thread.id,
-                                run_id=run.id,
-                                tool_outputs=tool_outputs,
-                            )
+            if run.status == "requires_action" and run.required_action.type == "submit_tool_outputs":
+                print("TOOL OUTPUTS", tool_outputs)
+                await client.beta.threads.runs.submit_tool_outputs(
+                    thread_id=thread.id,
+                    run_id=run.id,
+                    tool_outputs=tool_outputs,
+                )
 
         await cl.sleep(1)  # Refresh every second
         if run.status in ["cancelled", "failed", "completed", "expired"]:

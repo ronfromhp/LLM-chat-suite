@@ -142,7 +142,7 @@ async def process_new_delta(
 def start_chat():
     cl.user_session.set(
         "message_history",
-        [{"role": "system", "content": "You are a helpful assistant. You are specialised to work with senior citizens and help them with their daily tasks."}],
+        [{"role": "system", "content": "You are a helpful coding assistant. You are specialised to work with coders and provide detailed implementations"}],
     )
 
 
