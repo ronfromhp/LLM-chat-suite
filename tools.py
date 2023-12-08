@@ -58,7 +58,7 @@ def _generate_image(prompt: str):
 
 def generate_image(prompt: str):
     image_name = _generate_image(prompt)
-    return f"Here is {image_name}."
+    return f"Here is your image id:{image_name}."
 
 
 # this is our tool - which is what allows our agent to generate images in the first place!
@@ -68,7 +68,7 @@ generate_image_format = '{{"prompt": "prompt"}}'
 generate_image_tool = Tool.from_function(
     func=generate_image,
     name="GenerateImage",
-    description=f"Useful to create an image from a text prompt. Input should be a single string strictly in the following JSON format: {generate_image_format}",
+    description=f"Useful to create an image from a text prompt. Input should be a single string strictly in the following JSON format: {generate_image_format}. Output that you will see is just the image id. But dont worry the user will be able to see the image.",
     return_direct=True,
 )
 
@@ -85,7 +85,7 @@ def gpt_vision_call(image_id: str):
         stream=False,
     )
 
-    return stream
+    return stream.choices[0].message.content
 
 def handle_image_history(msg):
     image_history = cl.user_session.get("image_history")

@@ -7,7 +7,8 @@ from langchain.agents import Tool
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain.tools.wolfram_alpha import WolframAlphaQueryRun
 from langchain.utilities.wolfram_alpha import WolframAlphaAPIWrapper
-from langchain.utilities import SerpAPIWrapper
+from langchain.utilities.serpapi import SerpAPIWrapper
+from tools import generate_image_tool, describe_image_tool
 
 load_dotenv()
 
@@ -23,8 +24,10 @@ tools = [
     Tool(
         name="Search",
         func=search.run,
-        description="useful for when you need to answer questions about current events. You should ask targeted questions",
+        description="useful for when you need to answer questions about current events. You should ask targeted questions. please provide input in the form of a string",
     ),
+    generate_image_tool,
+    describe_image_tool,
     ]
 
 print(tools)
@@ -71,4 +74,5 @@ Given a formula below $$ s = ut + \frac{1}{2}at^{2} $$ Calculate the value of $s
     assistant_dict[assistant_name] = assistant.assistant_id
     json.dump(assistant_dict, open("assistants.json", "w"))
 
-asyncio.run(create())
+if __name__ == "__main__":
+    asyncio.run(create())
