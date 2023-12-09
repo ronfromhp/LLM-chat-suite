@@ -68,7 +68,13 @@ generate_image_format = '{{"prompt": "prompt"}}'
 generate_image_tool = Tool.from_function(
     func=generate_image,
     name="GenerateImage",
-    description=f"Useful to create an image from a text prompt. Input should be a single string strictly in the following JSON format: {generate_image_format}. Output that you will see is just the image id. But dont worry the user will be able to see the image.",
+    description=f"""
+    Useful to create an image from a text prompt.
+    Input should be a single string strictly in the following JSON format: {generate_image_format}.
+    Please prompt it as if youre prompting DALL-E 3 or any such image generation AIs. Assume that your chat 
+    history gets saved everytime you use this tool. So you can use the previous prompt as context for the next prompt.
+    Output that you will see is just the image id. But dont worry the user will be able to see the image.
+    """,
     return_direct=True,
 )
 
